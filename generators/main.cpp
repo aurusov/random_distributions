@@ -1,95 +1,96 @@
-#include <iostream>
 #include <cstdint>
+#include <iostream>
+#include <limits>
 #include <math.h>
 
 class Generator
 {
 protected:
-    Generator(std::uint32_t a_seed)
+    Generator(std::uint32_t seed_)
     {
-        seed_ = a_seed;
+        seed = seed_;
     }
 
     double next_u01()
     {
-        return next_seed() / 4294967296.0;
+        const double values_count = std::numeric_limits<std::uint32_t>::max() + 1.0;
+        return next_seed() / values_count;
     }
 
 private:
-    std::uint32_t seed_;
+    std::uint32_t seed;
 
     std::uint32_t next_seed()
     {
-        seed_ = seed_ * 69069 + 1;
-        return seed_;
+        seed = seed * 69069 + 1;
+        return seed;
     }
 };
 
 class Uniform: public Generator
 {
 public:
-    Uniform(std::uint32_t a_seed, double a, double b)
-        : Generator(a_seed)
+    Uniform(std::uint32_t seed_, double min_, double max_)
+        : Generator(seed_)
     {
-        a_ = a;
-        b_ = b;
+        min = min_;
+        max = max_;
     }
 
     double next_value()
     {
-        return a_ + next_u01() * (b_ - a_);
+        return min + next_u01() * (max - min);
     }
 
 private:
-    double a_;
-    double b_;
+    double min;
+    double max;
 };
 
 class Exponential: public Generator
 {
 public:
-    Exponential(std::uint32_t a_seed, double mean)
-        : Generator(a_seed)
+    Exponential(std::uint32_t seed_, double mean_)
+        : Generator(seed_)
     {
-        mean_ = mean;
+        mean = mean_;
     }
 
     double next_value()
     {
-        return -log(next_u01()) * mean_;
+        return -log(next_u01()) * mean;
     }
 
 private:
-    double mean_;
+    double mean;
 };
 
 class Normal: public Generator
 {
 public:
-    Normal(std::uint32_t a_seed, double mean, double std_dev)
-        : Generator(a_seed)
+    Normal(std::uint32_t seed_, double mean_, double std_dev_)
+        : Generator(seed_)
     {
-        mean_ = mean;
-        std_dev_ = std_dev;
+        mean = mean_;
+        std_dev = std_dev_;
     }
 
     double next_value()
     {
         double sum = 0;
         for (std::size_t i = 0; i < 12; ++i)
-        {
             sum += next_u01();
-        }
-        return std_dev_ * (sum - 6) + mean_;
+
+        return std_dev * (sum - 6) + mean;
     }
 
 private:
-    double mean_;
-    double std_dev_;
+    double mean;
+    double std_dev;
 };
 
 template<class T>
-void print(T sequence)
+void print_values(T & sequence)
 {
     const std::size_t count = 10;
     for (std::size_t i = 0; i < count; ++i)
@@ -100,17 +101,17 @@ int main()
 {
     std::cout << "uniform" << std::endl;
     Uniform uniform(12345, 1.5, 4.3);
-    print(uniform);
+    print_values(uniform);
 
     std::cout << std::endl;
     std::cout << "exponential" << std::endl;
     Exponential exponential(12345, 14.2);
-    print(exponential);
+    print_values(exponential);
 
     std::cout << std::endl;
     std::cout << "normal" << std::endl;
     Normal normal(12345, 15.2, 0.4);
-    print(normal);
+    print_values(normal);
 
     return 0;
 }
